@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Waste Classifier</title>
+  <title>EcoVision Waste Classifier</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
   <style>
@@ -13,7 +13,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       min-height: 100vh;
       padding: 40px;
       color: #333;
@@ -34,8 +33,9 @@
     }
     #result {
       margin-top: 20px;
-      font-size: 1.5em;
+      font-size: 1.3em;
       font-weight: bold;
+      white-space: pre-line;
     }
     input[type="file"] {
       margin: 20px 0;
@@ -58,7 +58,7 @@
 </head>
 <body>
   <h1>EcoVision Waste Classifier</h1>
-  <p class="instructions">Upload an image below. Click "Classify Image" to find out if it's waste or not.</p>
+  <p class="instructions">Upload an image and click "Classify Image". See the top 3 predictions and whether it's waste.</p>
   <input type="file" id="file-input" accept="image/*" />
   <img id="preview" src="" alt="Image preview" style="display:none;" />
   <div id="result">No image uploaded yet.</div>
@@ -78,6 +78,29 @@
     const preview = document.getElementById('preview');
     const result = document.getElementById('result');
     const classifyBtn = document.getElementById('classify-btn');
+
+    const wasteItems = [
+      "bottle",
+      "plastic",
+      "can",
+      "carton",
+      "bag",
+      "paper",
+      "food",
+      "banana",
+      "apple",
+      "wrapper",
+      "box",
+      "container",
+      "packaging",
+      "junk",
+      "trash",
+      "garbage",
+      "litter",
+      "bin",
+      "dump",
+      "scrap"
+    ];
 
     fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -101,13 +124,27 @@
       const predictions = await model.classify(preview);
       console.log(predictions);
 
-      const label = predictions[0].className.toLowerCase();
+      let output = "Top 3 Predictions:\n";
+      predictions.slice(0, 3).forEach((p, i) => {
+        output += `${i + 1}. ${p.className} (${(p.probability * 100).toFixed(1)}%)\n`;
+      });
 
-      if (label.includes('garbage') || label.includes('waste') || label.includes('trash') || label.includes('litter') || label.includes('bin')) {
-        result.innerText = "It's WASTE 🗑️";
+      const firstLabel = predictions[0].className.toLowerCase();
+
+      let isWaste = false;
+      wasteItems.forEach(item => {
+        if (firstLabel.includes(item)) {
+          isWaste = true;
+        }
+      });
+
+      if (isWaste) {
+        output += "\nConclusion: It's WASTE 🗑️";
       } else {
-        result.innerText = "It's NOT WASTE ✅";
+        output += "\nConclusion: It's NOT WASTE ✅";
       }
+
+      result.innerText = output;
     });
   </script>
 </body>
