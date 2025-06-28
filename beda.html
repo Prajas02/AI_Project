@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waste Classifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px;
+      color: #333;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    p.instructions {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+    }
+    #preview {
+      margin: 20px auto;
+      max-width: 90%;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    input[type="file"] {
+      margin: 20px 0;
+    }
+    button {
+      background-color: #007acc;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>EcoVision Waste Classifier</h1>
+  <p class="instructions">Upload an image below. Click "Classify Image" to find out if it's waste or not.</p>
+  <input type="file" id="file-input" accept="image/*" />
+  <img id="preview" src="" alt="Image preview" style="display:none;" />
+  <div id="result">No image uploaded yet.</div>
+  <button id="classify-btn" disabled>Classify Image</button>
+
+  <script>
+    let model;
+
+    async function loadModel() {
+      model = await mobilenet.load();
+      console.log("Model loaded!");
+    }
+
+    loadModel();
+
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const result = document.getElementById('result');
+    const classifyBtn = document.getElementById('classify-btn');
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        preview.src = event.target.result;
+        preview.style.display = 'block';
+        classifyBtn.disabled = false;
+        result.innerText = "Ready to classify.";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    classifyBtn.addEventListener('click', async () => {
+      if (!preview.src) return;
+
+      result.innerText = "Classifying...";
+
+      const predictions = await model.classify(preview);
+      console.log(predictions);
+
+      const label = predictions[0].className.toLowerCase();
+
+      if (label.includes('garbage') || label.includes('waste') || label.includes('trash') || label.includes('litter') || label.includes('bin')) {
+        result.innerText = "It's WASTE 🗑️";
+      } else {
+        result.innerText = "It's NOT WASTE ✅";
+      }
+    });
+  </script>
+</body>
+</html>
